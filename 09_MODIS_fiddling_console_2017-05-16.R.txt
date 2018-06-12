@@ -1,0 +1,71 @@
+getwd()
+setwd("/Users/ruanvanmazijk/")
+require(gdalUtils)
+gdalinfo("MOD11B3.A2000061.h19v12.006.2015160141751.hdf")
+gdalinfo("MOD11B3.A2000061.h19v12.006.2015160141751-new.hdf")
+get_subdatasets("MOD11B3.A2000061.h19v12.006.2015160141751-new.hdf")
+gdal_chooseInstallation(hasDrivers = c("HDF4"))
+library(MODIS)
+lay <- "MOD13Q1.A2014145.h21v09.005.2014162035037.hdf" # One of the raw 16days MODIS tiles we downloaded
+mod <- getSds(lay,method="gdal")
+install.packages("MODIS")
+library(MODIS)
+lay <- "MOD13Q1.A2014145.h21v09.005.2014162035037.hdf" # One of the raw 16days MODIS tiles we downloaded
+mod <- getSds(lay,method="gdal")
+getwd()
+library(MODIS)
+lay <- "MOD11B3.A2000061.h19v12.006.2015160141751.hdf"mod <- getSds(lay,method="gdal")
+library(MODIS)
+lay <- "MOD11B3.A2000061.h19v12.006.2015160141751.hdf"
+mod <- getSds(lay,method="gdal")
+library(MODIS)
+lay <- "MOD11B3.A2000061.h19v12.006.2015160141751-new.hdf"
+mod <- getSds(lay,method="gdal")
+library(MODIS)
+lay <- MOD11B3.A2000061.h19v12.006.2015160141751-new.hdf
+lay <- "/Data/MODIS_fiddling/MOD11B3.A2000061.h19v12.006.2015160141751-new.hdf"
+mod <- getSds(lay)
+lay <- 'MOD11B3.A2000061.h19v12.006.2015160141751-new.hdf'
+mod <- getSds(lay)
+getSds("MOD11B3.A2000061.h19v12.006.2015160141751-new.hdf")
+mod
+class(mod)
+library(raster)
+raster("Untitled.tif")
+it_w <- raster("Untitled.tif")
+plot(it_w)
+plot(terrain(it_w, "roughness"))
+plot(terrain(it_w, "roughness")[] ~ it_w[])
+agg_it_w <- aggregate(it_w)
+agg_it_w
+it_w
+plot(terrain(agg_it_w, "roughness")[] ~ agg_it_w[])
+for (i in 2:20) {
+plot(
+terrain(
+aggregate(it_w, i),
+"roughness"
+)
+)
+~
+)))))))))))
+for (i in 2:20) {plot(
++ terrain(
++ aggregate(it_w, i),
++ "roughness"
++ )
+for (i in 2:20) { plot(
+terrain(
+aggregate(it_w, i),
+"roughness"
+)[] ~ aggregate(it_w, i)[])
+}
+par(mfrow = c(3, 3))
+for (i in 2:20) { plot(
+terrain(
+aggregate(it_w, i),
+"roughness"
+)[] ~ aggregate(it_w, i)[])
+}
+savehistory(it_works_2017-05-16.R)
+savehistory("it_works_2017-05-16.R")

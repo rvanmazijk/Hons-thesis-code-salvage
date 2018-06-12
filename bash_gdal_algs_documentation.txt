@@ -1,0 +1,70 @@
+GDAL functions for working with NASA `.hdf`s specific to my MacBook Air
+
+Applying `bash` commands in `R`, but using the executables from my QGIS's GDAL
+installation algorithm directory
+
+Ruan van Mazijk
+
+conceived:    2017-05-16---19
+created:      2017-05-16
+last edited:  2017-05-18
+
+-----------------------------------------------------------------------------------------
+
+Aim: to convert NASA's MODIS `.hdf` (release 4) (= "HDF4") files into `.tif`s.
+
+Attempt 1:
+Using `gdalUtils` pkg in `R`, namely `gdal_translate()`.
+--> That failed...
+
+Attempt 2:
+Using `gdal_translate` fn in `bash`, after `brew`-ing `gdal`, `gdalUtils`, and trying to
+coerce it to install HDF4 drivers (e.g. `$ brew install gdal --options-with hdf4;`).
+--> Failed also...
+
+Conclusion:
+Neither `R` nor `bash` are able to acces the installation of GDAL that has the HDF4
+drivers I need... but QGIS /can/, as evident by its ability to open and display MODIS
+`.hdf`s with no problems (sub-datasets and bands even!). So clearly the information
+needed to interpret `.hdf`s does exist /somewhere/ on my laptop... but where?
+
+Solution:
+Navigation in QGIS to the algorithms toolbox allows me to see the directory for the
+`gdal_translate` and `gdalinfo` executables it uses (the ones that work with `.hdf`s!).
+And these directories evaluate in `bash` to the execs themselves.
+
+Implementation in R:
+Using the `base` funtion `system()` to run a character string as a `bash` command, I
+can use the QGIS GDAL execs!
+
+Let's try to run `$ gdalinfo ~/foo_folder/foo.hdf;` but with `gdalinfo` replaced with the
+QGIS GDAL version:
+
+```{r}
+gdalinfo <- "Library/foo/QGIS/GDAL/foo/foo/gdalinfo " # space NB!!!!
+system(
+  paste0(
+    gdalinfo, "~/foo_folder/foo.hdf"
+  )
+)
+```
+
+And then adding safety quotes around dir names (to cope with my HDD having a quote and a
+space in it... which `bash` can't handle!!!) (such that the quotes appear in `bash`,
+not `R`... so it's sort of markup-y here in `R`):
+
+```{r}
+gdalinfo <- "Library/foo/QGIS/GDAL/foo/foo/gdalinfo "
+system(
+  paste0(
+    gdalinfo, "\"", ~/foo_folder/foo.hdf", "\""
+  )
+)
+```
+
+C00l! Works great! See the `.R`-scripts for how to use "gdal_translate" like this
+(basically exactly the same, but with the "HDF4_EOS:EOS_GRID:" and band syntax).
+
+
+</> -------------------------------------------------------------------------------------
+

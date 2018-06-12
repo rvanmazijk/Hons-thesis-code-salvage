@@ -1,0 +1,364 @@
+#<p>The function below is called GetMODIS, it is a quick, efficient way to download MODIS data using R.&nbsp;It was developed by <a href="http://r-gis.net/?q=naimi" target="_blank">Babak Naimi</a> at the Faculty of Geo-Information Science and Earth Observation (<a href="http://www.itc.nl/" target="_blank">ITC</a>). In order to use the function, the&nbsp;<a href="http://cran.r-project.org/web/packages/RCurl/index.html" target="_blank">RCurl</a>&nbsp;package must be installed in R and loaded. Then, set the location of the GetMODIS script as the working directory:</p>
+
+# The ProjectMODIS function is a wrapper for the LPDAAC-developed MODIS Rrojection Tool (MRT) which can resample, subset and reproject HDF data
+# and convert them to geoTIFFS. This goes without saying but the mosacing and reprojection components of the function will only work if MRT is installed.
+# Download MRT from LPDAAC here: https://lpdaac.usgs.gov/tools/modis_reprojection_tool
+ProjectMODIS <-
+  function(fname = 'tmp.file',
+           hdfName,
+           output.name,
+           MRTLoc,
+           UL = "",
+           LR = "",
+           resample.method = 'NEAREST_NEIGHBOR',
+           projection = 'UTM',
+           subset.bands = '',
+           parameters = '0 0 0 0 0 0 0 0 0 0 0 0',
+           datum = 'WGS84',
+           utm.zone = NA,
+           pixel_size = 1000) {
+    filename = file(fname, open = "wt")
+    write(paste('INPUT_FILENAME = ', getwd(), '/', hdfName, sep = ""),
+          filename)
+    if (subset.bands != '') {
+      write(paste('SPECTRAL_SUBSET = ( ', subset.bands, ' )', sep = ''),
+            filename,
+            append = TRUE)
+    }
+    if (UL[1] != '' & LR[1] != '') {
+      write('SPATIAL_SUBSET_TYPE = OUTPUT_PROJ_COORDS',
+            filename,
+            append = TRUE)
+      write(
+        paste(
+          'SPATIAL_SUBSET_UL_CORNER = ( ',
+          as.character(UL[1]),
+          ' ',
+          as.character(UL[2]),
+          ' )',
+          sep = ''
+        ),
+        filename,
+        append = TRUE
+      )
+      write(
+        paste(
+          'SPATIAL_SUBSET_LR_CORNER = ( ',
+          as.character(LR[1]),
+          ' ',
+          as.character(LR[2]),
+          ' )',
+          sep = ''
+        ),
+        filename,
+        append = TRUE
+      )
+    }
+    write(paste('OUTPUT_FILENAME = ', output.name, sep = ""),
+          filename,
+          append = TRUE)
+    write(paste('RESAMPLING_TYPE = ', resample.method, sep = ''),
+          filename,
+          append = TRUE)
+    write(paste('OUTPUT_PROJECTION_TYPE = ', projection, sep = ''),
+          filename,
+          append = TRUE)
+    write(
+      paste('OUTPUT_PROJECTION_PARAMETERS = ( ', parameters, ' )', sep = ''),
+      filename,
+      append = TRUE
+    )
+    write(paste('DATUM = ', datum, sep = ''), filename, append = TRUE)
+    if (projection == 'UTM')
+      write(paste('UTM_ZONE = ', utm.zone, sep = ''), filename, append = TRUE)
+    write(paste('OUTPUT_PIXEL_SIZE = ', as.character(pixel_size), sep = ''),
+          filename,
+          append = TRUE)
+    close(filename)
+    e <-
+      system(paste(MRTLoc, '/resample -p ', getwd(), '/', fname, sep = ''))
+    e
+  }
+
+GetMODIS <-
+  function(FTP,
+           h,
+           v,
+           dates,
+           mosaic = T,
+           MRTLoc,
+           subset.bands = '',
+           del = T,
+           proj = T,
+           UL = "",
+           LR = "",
+           resample.method = 'NEAREST_NEIGHBOR',
+           projection = 'UTM',
+           parameters = '0 0 0 0 0 0 0 0 0 0 0 0',
+           datum = 'WGS84',
+           utm.zone = NA,
+           pixel_size) {
+    if (strsplit(FTP, '')[[1]][length(strsplit(FTP, '')[[1]])] != "/")
+      FTP <- paste(FTP, "/", sep = "")
+    if (.Platform$OS.type == "unix")
+      options('download.file.method' = 'wget')
+    else
+      options('download.file.method' = 'auto')
+    items <- 0
+    class(items) <- "try-error"
+    ce <- 0
+    while (class(items) == "try-error") {
+      items <- try(strsplit(getURL(FTP), "\r*\n")[[1]], silent = TRUE)
+      if (class(items) == "try-error") {
+        Sys.sleep(60)
+        ce <- ce + 1
+        if (ce == 21)
+          stop("The FTP server is not responding. Please try again later.")
+      }
+    }
+    items <- items[-1]
+    
+    dirs <-
+      unlist(lapply(strsplit(items, " "), function(x) {
+        x[length(x)]
+      }))
+    
+    if (length(dates) > 1) {
+      start.date <- strsplit(dates[1], '\\.')[[1]]
+      end.date <- strsplit(dates[2], '\\.')[[1]]
+      wr <- c()
+      for (i in 1:length(dirs)) {
+        d <- unlist(strsplit(dirs[i], "\\."))
+        if (length(d) == 3)
+          if (as.numeric(d[1]) >= as.numeric(start.date[1]) &
+              as.numeric(d[1]) <= as.numeric(end.date[1]))
+            wr <- c(wr, i)
+      }
+      if (length(wr) > 0)
+        dirs <- dirs[wr]
+      wr <- c()
+      for (i in 1:length(dirs)) {
+        d <- unlist(strsplit(dirs[i], "\\."))
+        if (as.numeric(d[2]) < as.numeric(start.date[2]) &
+            as.numeric(d[1]) == as.numeric(start.date[1]))
+          wr <- c(wr, i)
+        if (as.numeric(d[2]) > as.numeric(end.date[2]) &
+            as.numeric(d[1]) == as.numeric(end.date[1]))
+          wr <- c(wr, i)
+      }
+      if (length(wr) > 0)
+        dirs <- dirs[-wr]
+      wr <- c()
+      for (i in 1:length(dirs)) {
+        d <- unlist(strsplit(dirs[i], "\\."))
+        if (as.numeric(d[3]) < as.numeric(start.date[3]) &
+            as.numeric(d[1]) == as.numeric(start.date[1]) &
+            as.numeric(d[2]) == as.numeric(start.date[2]))
+          wr <- c(wr, i)
+        if (as.numeric(d[3]) > as.numeric(end.date[3]) &
+            as.numeric(d[1]) == as.numeric(end.date[1]) &
+            as.numeric(d[2]) == as.numeric(end.date[2]))
+          wr <- c(wr, i)
+      }
+      if (length(wr) > 0)
+        dirs <- dirs[-wr]
+    } else
+      dirs <- dirs[which(dirs == dates[1])]
+    if (length(dirs) < 1)
+      stop("There are no data available on the server for the chosen dates.")
+    
+    for (i in 1:length(dirs)) {
+      getlist <- 0
+      class(getlist) <- "try-error"
+      ce <- 0
+      while (class(getlist) == "try-error") {
+        getlist <-
+          try(strsplit(getURL(paste(FTP, dirs[i], "/", sep = "")), "\r*\n")[[1]], silent =
+                TRUE)
+        if (class(getlist) == "try-error") {
+          Sys.sleep(60)
+          ce <- ce + 1
+          if (ce == 21)
+            stop("The FTP server is not responding. Please try again later.")
+        }
+      }
+      getlist <- getlist[-1]
+      getlist <-
+        unlist(lapply(strsplit(getlist, " "), function(x) {
+          x[length(x)]
+        }))
+      Modislist <- c()
+      for (vv in v) {
+        for (hh in h) {
+          if (vv < 10)
+            vc <- paste('0', as.character(vv), sep = '')
+          else
+            vc <- as.character(vv)
+          if (hh < 10)
+            hc <- paste('0', as.character(hh), sep = '')
+          else
+            hc <- as.character(hh)
+          ModisName <-
+            grep(".hdf$", grep(paste('h', hc, 'v', vc, sep = ''), getlist, value =
+                                 TRUE), value = TRUE)
+          if (length(ModisName) == 1)
+            Modislist <- c(Modislist, ModisName)
+        }
+      }
+      
+      if (length(Modislist) > 0) {
+        for (ModisName in Modislist) {
+          er <- 0
+          class(er) <- "try-error"
+          ce <- 0
+          while (class(er) == "try-error") {
+            er <-
+              try(download.file(
+                url = paste(FTP, dirs[i], "/", ModisName, sep = ''),
+                destfile = ModisName,
+                mode = 'wb',
+                quiet = T,
+                cacheOK = FALSE
+              ),
+              silent = TRUE)
+            if (class(er) == "try-error") {
+              Sys.sleep(60)
+              ce <- ce + 1
+              if (ce == 21)
+                stop("The FTP server is not responding. Please try again later.")
+            }
+          }
+        }
+        print (
+          paste(
+            length(Modislist),
+            " data for the chose date of ",
+            dirs[i],
+            " have been successfully downloaded.",
+            sep = ''
+          )
+        )
+        
+        date_name <-
+          sub(
+            sub(pattern = "\\.", replacement = "_", dirs[i]),
+            pattern = "\\.",
+            replacement = "_",
+            dirs[i]
+          )
+        if (length(Modislist) > 1 & mosaic) {
+          mosaicname = file(paste(MRTLoc, "/temporary.mosaic", sep = ""), open = "wt")
+          write(paste(getwd(), "/", Modislist[1], sep = ""), mosaicname)
+          for (j in 2:length(Modislist))
+            write(paste(getwd(), "/", Modislist[j], sep = ""),
+                  mosaicname,
+                  append = T)
+          close(mosaicname)
+          
+          if (subset.bands != '') {
+            e <-
+              system(
+                paste(
+                  MRTLoc,
+                  '/mrtmosaic -i ',
+                  MRTLoc,
+                  '/temporary.mosaic -s "',
+                  subset.bands,
+                  '" -o ',
+                  getwd(),
+                  '/Mosaic_',
+                  date_name,
+                  '.hdf',
+                  sep = ""
+                )
+              )
+            if (e != 0)
+              print ("Mosaic failed! 'subset.bands' may has incorrect structure!")
+          } else {
+            e <-
+              system(
+                paste(
+                  MRTLoc,
+                  '/mrtmosaic -i ',
+                  MRTLoc,
+                  '/temporary.mosaic -o ',
+                  getwd(),
+                  '/Mosaic_',
+                  date_name,
+                  '.hdf',
+                  sep = ""
+                )
+              )
+            if (e != 0)
+              print ("Mosaic failed!")
+          }
+          if (del)
+            for (ModisName in Modislist)
+              unlink(paste(getwd(), '/', ModisName, sep = ""))
+        } else
+          mosaic = FALSE
+        if (proj) {
+          pref <- strsplit(ModisName, '\\.')[[1]][1]
+          if (mosaic)
+            e <-
+              ProjectMODIS(
+                'parameter.file',
+                hdfName = paste('Mosaic_', date_name, '.hdf', sep = ''),
+                output.name = paste(pref, '_', date_name, '.tif', sep = ''),
+                MRTLoc = MRTLoc,
+                UL = UL,
+                LR = LR,
+                projection = projection,
+                parameters = parameters,
+                utm.zone = utm.zone,
+                pixel_size = pixel_size
+              )
+          else {
+            if (subset.bands == '')
+              e <-
+                ProjectMODIS(
+                  'parameter.file',
+                  hdfName = ModisName,
+                  output.name = paste(pref, '_', date_name, '.tif', sep = ''),
+                  MRTLoc = MRTLoc,
+                  UL = UL,
+                  LR = LR,
+                  projection = projection,
+                  parameters = parameters,
+                  utm.zone = utm.zone,
+                  pixel_size = pixel_size
+                )
+            else
+              e <-
+                ProjectMODIS(
+                  'parameter.file',
+                  hdfName = ModisName,
+                  output.name = paste(pref, '_', date_name, '.tif', sep = ''),
+                  MRTLoc = MRTLoc,
+                  subset.bands = subset.bands,
+                  UL = UL,
+                  LR = LR,
+                  projection = projection,
+                  parameters = parameters,
+                  utm.zone = utm.zone,
+                  pixel_size = pixel_size
+                )
+          }
+          if (e != 0)
+            print ("reprojection Failed!")
+          if (del &
+              mosaic)
+            unlink(paste('Mosaic_', date_name, '.hdf', sep = ''))
+          else {
+            if (del)
+              unlink(ModisName)
+          }
+        }
+      } else
+        print(paste(
+          "There is no imagery on the server for the selected tiles in ",
+          dirs[i],
+          sep = ""
+        ))
+    }
+  }
