@@ -13,18 +13,17 @@
 
 if (!require(pacman)) install.packages("pacman", dependencies = TRUE)
 library(pacman)
-p_load(
-    # Data-manipulation & coding
-    magrittr, tidyverse, beepr, reshape2, here, glue, stringr, lubridate,
-    # Stats
-    quantreg, broom, ggplot2, gridExtra, visreg, ggfortify,
-    # GIS
-    raster, rasterVis, sp, dismo, rgdal, spatstat,
-    # Taxonomy
-    taxize
-)
+p_load(# Data-manipulation & coding
+       magrittr, tidyverse, beepr, reshape2, here, glue, stringr, lubridate,
+       # Stats
+       quantreg, broom, ggplot2, gridExtra, visreg, ggfortify,
+       # GIS
+       raster, rasterVis, sp, dismo, rgdal, spatstat,
+       # Taxonomy
+       taxize)
 
 # All relative to the project wd:
+# TODO: remake with `here()`
 datwd <- paste0(getwd(), "/Data/")
 giswd <- "/Volumes/RUAN'S HDD/GIS/"
 modwd <- paste0(giswd, "MOD11C3/order_501145540_GeoTiffs/")
@@ -34,6 +33,8 @@ op <- par()
 
 std_CRS <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 
+
+# TODO: remove roxygen?
 
 # plot_fun_raster() et al. -----------------------------------------------------
 
@@ -51,11 +52,9 @@ plot_fun_raster_loop <- function(x, f) {
     if (not(is.raster(x))) stop("x must be a raster")
     for (i in seq_along(f)) {
         x_eval <- eval(parse(text = paste0(f[i], "(x)")))
-        plot(
-            x_eval,
-            zlim = c(min(x_eval[]), max(x_eval[])),
-            main = paste0(f[i], " ", substitute(x))
-        )
+        plot(x_eval,
+             zlim = c(min(x_eval[]), max(x_eval[])),
+             main = paste0(f[i], " ", substitute(x)))
     }
 }
 
@@ -69,11 +68,9 @@ plot_fun_raster_loop <- function(x, f) {
 plot_fun_raster_char <- function(x, f) {
     if (not(is_raster(x))) stop("x must be a raster")
     x_eval <- eval(parse(text = paste0(f, "(x)")))
-    plot(
-        x_eval,
-        zlim = c(min(x_eval[]), max(x_eval[])),
-        main = paste0(f, " ", substitute(x))
-    )
+    plot(x_eval,
+         zlim = c(min(x_eval[]), max(x_eval[])),
+         main = paste0(f, " ", substitute(x)))
 }
 
 #' plot_fun_raster
@@ -89,11 +86,9 @@ plot_fun_raster <- function(x, f) {
     if (not(is_raster(x))) stop("x must be a raster")
     if (not(is.function(f))) stop("f must be a function")
     f_x <- f(x)
-    plot(
-        f_x,
-        zlim = c(min(f_x[]), max(f_x[])),
-        main = paste0(substitute(f), " ", substitute(x))
-    )
+    plot(f_x,
+         zlim = c(min(f_x[]), max(f_x[])),
+         main = paste0(substitute(f), " ", substitute(x)))
 }
 
 
@@ -132,13 +127,11 @@ plot_abs_vs_rough <- function(x) {
     if (not(is_raster(x))) stop("x must be a raster")
 
     r <- terrain(x, "roughness")
-    plot(
-        r[] ~ x[],
-        xlab = substitute(x),
-        ylab = paste0("h(", substitute(x), ")"),
-        pch = 1,
-        col = "grey"
-    )
+    plot(r[] ~ x[],
+         xlab = substitute(x),
+         ylab = paste0("h(", substitute(x), ")"),
+         pch = 1,
+         col = "grey")
     m <- lm(r[] ~ x[])
     print(summary(m))
 
@@ -161,10 +154,8 @@ plot_abs_vs_rough <- function(x) {
 
     out_list <- list(m, CI, PI)
     out_list %<>% c(., map(out_list, summary))
-    names(out_list) <- c(
-        "model", "CI", "PI",
-        "model_summary", "CI_summary", "PI_summary"
-    )
+    names(out_list) <- c("model", "CI", "PI",
+                         "model_summary", "CI_summary", "PI_summary")
     return(out_list)
 
 }
@@ -239,12 +230,10 @@ custom_resample_loop <- function(x, res,
     if (not(is_raster(x))) stop("x must be a raster")
     custom_resample_list <- vector("list", length = length(res))
     for (i in seq_along(res)) {
-        custom_resample_list[[i]] <- custom_resample(
-            x = x,
-            res = res[i],
-            co_ord = co_ord,
-            method = method
-        )
+        custom_resample_list[[i]] <- custom_resample(x = x,
+                                                     res = res[i],
+                                                     co_ord = co_ord,
+                                                     method = method)
     }
     return(custom_resample_list)
 }
@@ -263,11 +252,9 @@ custom_aggregate_loop <- function(x, facts, co_ord = std_CRS, method = mean) {
     if (not(is_raster(x))) stop("x must be a raster")
     custom_aggregate_list <- vector("list", length = length(facts))
     for (i in seq_along(facts)) {
-        custom_aggregate_list[[i]] <- raster::aggregate(
-            x = x,
-            fact = facts[i],
-            fun = method
-        )
+        custom_aggregate_list[[i]] <- raster::aggregate(x = x,
+                                                        fact = facts[i],
+                                                        fun = method)
     }
     names(custom_aggregate_list) <- as.character(facts)
     return(custom_aggregate_list)
@@ -347,11 +334,9 @@ make_df_of_list_pts <- function(x, val) {
         names(x[[i]]) <- seq_along(x[[i]])
         x[[i]] %<>%
             reshape2::melt(id.var = names(x)[i]) %>%
-            cbind(
-                pt_ID = rownames(.),
-                .,
-                fact = names(x)[i]
-            )
+            cbind(pt_ID = rownames(.),
+                  .,
+                  fact = names(x)[i])
         names(x[[i]])[2] <- val
     }
     return(x)
@@ -376,10 +361,8 @@ cf_1_2 <- function(a, b) {
     visreg(b)
     title(main = paste0(substitute(b), ":        ", b$call[2]))
 
-    return(list(
-        summary_a = summary(a),
-        summary_b = summary(b)
-    ))
+    return(list(summary_a = summary(a),
+                summary_b = summary(b)))
 
 }
 
@@ -416,58 +399,43 @@ quant_plot <- function(x, y, dat,
                        main_lab = "", sub_lab = "") {
 
     #Plot the data pts
-    plot(
-        y ~ jitter(x, 2.5),
-        # (jittered bc when I used it on the `fact` data, looks better!)
-        data = dat,
-        ylab = y_lab,
-        xlab = x_lab,
-        main = main_lab,
-        sub  = sub_lab,
-        pch  = ".",
-        col  = "grey"
-    )
+    plot(y ~ jitter(x, 2.5),
+         # (jittered bc when I used it on the `fact` data, looks better!)
+         data = dat,
+         ylab = y_lab,
+         xlab = x_lab,
+         main = main_lab,
+         sub  = sub_lab,
+         pch  = ".",
+         col  = "grey")
     # Generatre a sequence of `x` to predict the quantiles from
-    x_seq <- dat %$% seq(
-        min(x, na.rm = T), max(x, na.rm = T),
-        (max(x, na.rm = T) - min(x, na.rm = T)) / 1000
-    )
+    x_seq <- dat %$% seq(from = min(x, na.rm = T),
+                         to = max(x, na.rm = T),
+                         by = (max(x, na.rm = T) - min(x, na.rm = T)) / 1000)
     # 95% quantile fit
-    mq95 <- rq(
-        log(y) ~ log(x) + I(log(x) ^ 2),
-        tau = 0.95,
-        data = dat
-    )
+    mq95 <- rq(formula = log(y) ~ log(x) + I(log(x) ^ 2),
+               tau = 0.95,
+               data = dat)
     # Plot that fit
     y95 <- predict(mq95, list(x = x_seq))
-    lines(
-        x = x_seq, y = exp(y95),
-        lty = 2, lwd = 1, col = "red"
-    )
+    lines(x = x_seq, y = exp(y95),
+          lty = 2, lwd = 1, col = "red")
 
     # And repeat for 75, 50, 25, & 5%:
 
-    mq75 <- rq(
-        log(y) ~ log(x) + I(log(x) ^ 2),
-        tau = 0.75,
-        data = dat
-    )
+    mq75 <- rq(formula = log(y) ~ log(x) + I(log(x) ^ 2),
+               tau = 0.75,
+               data = dat)
     y75 <- predict(mq75, list(x = x_seq))
-    lines(
-        x = x_seq, y = exp(y75),
-        lty = 1, lwd = 1, col = "red"
-    )
+    lines(x = x_seq, y = exp(y75),
+          lty = 1, lwd = 1, col = "red")
 
-    mq50 <- rq(
-        log(y) ~ log(x) + I(log(x) ^ 2),
-        tau = 0.50,
-        data = dat
-    )
+    mq50 <- rq(formula = log(y) ~ log(x) + I(log(x) ^ 2),
+               tau = 0.50,
+               data = dat)
     y50 <- predict(mq50, list(x = x_seq))
-    lines(
-        x = x_seq, y = exp(y50),
-        lty = 1, lwd = 2, col = "red"
-    )
+    lines(x = x_seq, y = exp(y50),
+          lty = 1, lwd = 2, col = "red")
 
     mq25 <- rq(
         log(y) ~ log(x) + I(log(x) ^ 2),
