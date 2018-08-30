@@ -41,7 +41,9 @@ analyse_roughness_and_scale <- function(layer,
                                         facts = 2:15,
                                         seed = 57701,
                                         border,
-                                        how_many_rand_pts = 1000) {
+                                        how_many_rand_pts = 1000,
+                                        raw_rand_pts_provided = FALSE,
+                                        raw_rand_pts = NULL) {
 
     aggregate_layer <- function(layer, var_name, facts) {
 
@@ -243,31 +245,6 @@ analyse_roughness_and_scale <- function(layer,
             models = models,
             AICs = AICs
         ))
-
-    }
-
-    do_PCA_roughness_across_scales <- function(extracted_layer_agg_rough,
-                                               var_name) {
-
-        # Organise `extracted_layer_agg_rough` for use with `prcomp()`
-        my_key <- "fact"
-        my_value <- glue("rough_agg_{var_name}")
-        extracted_layer_agg_rough_for_PCA <- extracted_layer_agg_rough %>%
-            spread_(
-                key_col = my_key,
-                value_col = my_value
-            ) %>%
-            na.omit()
-
-        # Run `prcomp()` without the lon, lat, and pt_ID columns
-        roughness_scale_PCA <- prcomp(
-            extracted_layer_agg_rough_for_PCA[, -c(1:3)]
-        )
-
-        # TODO: plots
-        # TODO: save
-
-        return(roughness_scale_PCA)
 
     }
 
