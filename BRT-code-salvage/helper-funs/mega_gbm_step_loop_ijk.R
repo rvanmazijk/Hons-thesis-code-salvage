@@ -17,11 +17,11 @@ mega_gbm_step_loop_ijk <- function(data, gbm.x, gbm.y,
         for (j in tree_complexities) {
             for (k in learning_rates) {
                 message(glue::glue("
-                   Starting\\
-                   tolerance = {tolerance},\\
-                   tree complexity = {j},\\
-                   learning rate = {k}
-                "))
+                                   Starting\\
+                                   tolerance = {tolerance},\\
+                                   tree complexity = {j},\\
+                                   learning rate = {k}
+                                   "))
                 gbm_step_results_ijk <- dismo::gbm.step(
                     data             = data,
                     gbm.x            = gbm.x,
@@ -47,14 +47,14 @@ mega_gbm_step_loop_ijk <- function(data, gbm.x, gbm.y,
                 saveRDS(
                     object = gbm_step_results_ijk,
                     file = paste(sep = "/",
-                        out_dir,
-                        glue::glue("
-                            gbm.step-output_\\
-                            tol-{tolerance}_\\
-                            tc-{j}_\\
-                            lr-{k}\\
-                            .rds
-                        ")
+                                 out_dir,
+                                 glue::glue("
+                                gbm.step-output_\\
+                                tol-{tolerance}_\\
+                                tc-{j}_\\
+                                lr-{k}\\
+                                .rds
+                            ")
                     )
                 )
             }
@@ -64,6 +64,7 @@ mega_gbm_step_loop_ijk <- function(data, gbm.x, gbm.y,
     if (do_tolerances_in_parallel) {
         # Note: doing tol in parallel is largely useless now,
         # as I am (for predictor set 3) only really feeding 1 tol.
+
         cluster <- makeCluster(detectCores() - 1, outfile = "")
         parLapply(cluster,
                   as.list(tolerances),
@@ -77,7 +78,9 @@ mega_gbm_step_loop_ijk <- function(data, gbm.x, gbm.y,
                   out_dir = out_dir
         )
         stopCluster(cluster)
+
     } else {
+
         for (i in tolerances) {
             gbm_step_loop_jk(
                 data = data,
@@ -90,6 +93,7 @@ mega_gbm_step_loop_ijk <- function(data, gbm.x, gbm.y,
                 out_dir = out_dir
             )
         }
+
     }
 
 }
