@@ -37,7 +37,8 @@ jaccard_focal_vs_neighbours <- function(communities_by_cell,
 
 jaccard_focal_vs_neighbours_quick <- function(community_dict,
                                               focal_cell_name,
-                                              neighbour_cell_names) {
+                                              neighbour_cell_names,
+                                              return_raw_dist_matrix = FALSE) {
 
     # Get all 9 cells in the window (= focal + 8x NNs) -------------------------
 
@@ -61,20 +62,17 @@ jaccard_focal_vs_neighbours_quick <- function(community_dict,
 
     jaccard_dists <- vector("list")
 
-    for (i in seq_along(neighbour_cells)) {
+    focal_cell <- community_dict[
+        names(community_dict) == focal_cell_name
+    ] %>%
+        map(as.character) %>%
+        unlist() %>%
+        as.vector()
+    neighbour_cells <- community_dict[
+        names(community_dict) %in% neighbour_cell_names
+    ]
 
-        # <!!>
-        #focal_cell <- GCFR_clean_flora_community_dict[
-        #    names(GCFR_clean_flora_community_dict) == focal_cell_name
-        #] %>%
-        #    map(as.character) %>%
-        #    unlist() %>%
-        #    as.vector()
-        #neighbour_cells <- GCFR_clean_flora_community_dict[
-        #    names(GCFR_clean_flora_community_dict) %in% neighbour_cell_names
-        #]
-        #neighbour_cell <- neighbour_cells[[4]]
-        # </!!>
+    for (i in seq_along(neighbour_cells)) {
 
         mini_community <- focal_cell %and% neighbour_cells[[i]]
         mini_community_matrix <- matrix(
@@ -102,16 +100,67 @@ jaccard_focal_vs_neighbours_quick <- function(community_dict,
         }
 
         # Calculate Jaccard's distance between these two communities
-        jaccard_dists[[i]] <- c(designdist(
+        jaccard_dists[[i]] <- designdist(
             mini_community_matrix,
             method = "(A + B - 2*J) / (A + B - J)"
-        ))
+        )
         names(jaccard_dists)[i] <- names(neighbour_cells)[i]
 
     }
 
-    focal_mean_jaccard_dist <- mean(unlist(jaccard_dists), na.rm = TRUE)
+    if (return_raw_dist_matrix) {
+        return(jaccard_dists)
+    } else {
+        focal_mean_jaccard_dist <- mean(unlist(jaccard_dists), na.rm = TRUE)
+        return(focal_mean_jaccard_dist)
+    }
+
+}
+
+jaccard_focal_vs_neighbours_quick2 <- function(mini_community_matrix) {
+
+    # Calculate Jaccard's distance between these two communities
+    jaccard_dists <- designdist(
+        mini_community_matrix,
+        method = "(A + B - 2*J) / (A + B - J)"
+    )
+
+    # Mean the dists between focal cell each neighbour cell
+    focal_mean_jaccard_dist <- mean(as.matrix(jaccard_dists)[-1, 1])
     return(focal_mean_jaccard_dist)
+
+}
+
+jaccard_grid2 <- function(raster, community_dict) {
+
+    jaccard_raster <- raster
+    jaccard_raster[] <- NA
+
+    for (i in seq_along(community_dict)) {
+
+        focal_cell_name <- as.numeric(names(community_dict)[i])
+        neighbour_cell_names <- get_neighbouring_cells(
+            raster,
+            focal_cell_name
+        )
+
+        mini_community_matrix <- make_mini_community_matrix(
+            focal_cell = community_dict[as.character(focal_cell_name)],
+            neighbour_cells = community_dict[as.character(neighbour_cell_names)]
+        )
+
+        avg_jaccard_for_a_focal_cell <- jaccard_focal_vs_neighbours_quick2(
+            mini_community_matrix
+        )
+
+        jaccard_raster[focal_cell_name] <- avg_jaccard_for_a_focal_cell
+        message(glue("
+            Cell no. {i} of {length(community_dict)} completed
+        "))
+
+    }
+
+    return(jaccard_raster)
 
 }
 

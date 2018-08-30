@@ -16,8 +16,8 @@ make_r2_and_nt_plots <- function(region_saved_BRTs_summary) {
         )) +
         scale_fill_distiller(
             palette = "Spectral",
-            name = expression(paste("pseudo-", italic("R") ^ 2)),
-            lim = c(0, 0.725)
+            name = expression(paste("pseudo-", italic("R") ^ 2))#,
+            #lim = c(min(pseudo_r2), 0.725)
         ) +
         theme_minimal()
 
@@ -42,8 +42,8 @@ make_r2_and_nt_plots <- function(region_saved_BRTs_summary) {
         ) +
         theme_minimal()
 
-    plot(r2_plot)
-    plot(nt_plot)
+    #plot(r2_plot)
+    #plot(nt_plot)
     return(list(
         r2_plot = r2_plot,
         nt_plot = nt_plot
@@ -58,43 +58,43 @@ make_contrib_summary <- function(region_saved_BRTs) {
         return(x %$% list(
 
             lr_0.01 = list(
-                summary(tol_5e_04_tc_1_lr_0.01 ),
-                summary(tol_5e_04_tc_2_lr_0.01 ),
-                summary(tol_5e_04_tc_3_lr_0.01 ),
-                summary(tol_5e_04_tc_4_lr_0.01 ),
-                summary(tol_5e_04_tc_5_lr_0.01 )
+                tol_5e_04_tc_1_lr_0.01,
+                tol_5e_04_tc_2_lr_0.01,
+                tol_5e_04_tc_3_lr_0.01,
+                tol_5e_04_tc_4_lr_0.01,
+                tol_5e_04_tc_5_lr_0.01
             ),
 
             lr_0.005 = list(
-                summary(tol_5e_04_tc_1_lr_0.005),
-                summary(tol_5e_04_tc_2_lr_0.005),
-                summary(tol_5e_04_tc_3_lr_0.005),
-                summary(tol_5e_04_tc_4_lr_0.005),
-                summary(tol_5e_04_tc_5_lr_0.005)
+                tol_5e_04_tc_1_lr_0.005,
+                tol_5e_04_tc_2_lr_0.005,
+                tol_5e_04_tc_3_lr_0.005,
+                tol_5e_04_tc_4_lr_0.005,
+                tol_5e_04_tc_5_lr_0.005
             ),
 
             lr_0.001 = list(
-                summary(tol_5e_04_tc_1_lr_0.001),
-                summary(tol_5e_04_tc_2_lr_0.001),
-                summary(tol_5e_04_tc_3_lr_0.001),
-                summary(tol_5e_04_tc_4_lr_0.001),
-                summary(tol_5e_04_tc_5_lr_0.001)
+                tol_5e_04_tc_1_lr_0.001,
+                tol_5e_04_tc_2_lr_0.001,
+                tol_5e_04_tc_3_lr_0.001,
+                tol_5e_04_tc_4_lr_0.001,
+                tol_5e_04_tc_5_lr_0.001
             ),
 
             lr_5e_04 = list(
-                summary(tol_5e_04_tc_1_lr_5e_04),
-                summary(tol_5e_04_tc_2_lr_5e_04),
-                summary(tol_5e_04_tc_3_lr_5e_04),
-                summary(tol_5e_04_tc_4_lr_5e_04),
-                summary(tol_5e_04_tc_5_lr_5e_04)
+                tol_5e_04_tc_1_lr_5e_04,
+                tol_5e_04_tc_2_lr_5e_04,
+                tol_5e_04_tc_3_lr_5e_04,
+                tol_5e_04_tc_4_lr_5e_04,
+                tol_5e_04_tc_5_lr_5e_04
             ),
 
             lr_1e_04 = list(
-                summary(tol_5e_04_tc_1_lr_1e_04),
-                summary(tol_5e_04_tc_2_lr_1e_04),
-                summary(tol_5e_04_tc_3_lr_1e_04),
-                summary(tol_5e_04_tc_4_lr_1e_04),
-                summary(tol_5e_04_tc_5_lr_1e_04)
+                tol_5e_04_tc_1_lr_1e_04,
+                tol_5e_04_tc_2_lr_1e_04,
+                tol_5e_04_tc_3_lr_1e_04,
+                tol_5e_04_tc_4_lr_1e_04,
+                tol_5e_04_tc_5_lr_1e_04
             )
 
         ))
